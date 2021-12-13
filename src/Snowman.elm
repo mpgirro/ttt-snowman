@@ -2,10 +2,11 @@ module Snowman exposing (..)
 
 import Browser exposing (Document)
 import Browser.Events exposing (onKeyPress)
+import Char exposing (toUpper)
 import Html exposing (Html, button, code, div, h1, input, p, pre, span, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import String exposing (fromChar, fromList, uncons)
+import String exposing (contains, fromChar, fromList, toUpper, uncons)
     
 
 ---- PROGRAM ----
@@ -59,7 +60,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         UpdateSnowman c ->
-            ( { model | letter = model.letter ++ [c] }, Cmd.none)
+            ( { model | letter = model.letter ++ [ (Char.toUpper c) ] }, Cmd.none)
 
         Restart ->
             ( initModel, Cmd.none)
@@ -117,10 +118,10 @@ viewContent model =
 viewHeader : Html msg
 viewHeader = h1 [] [ text "TTT Snowman" ] 
 
-viewQuiz : Model -> Html msg
+viewQuiz : Model -> Html Msg
 viewQuiz model = 
     div [] 
-        [ p [] [ span [] [ text "Quiz" ], text model.secretWord ] ]
+        [ p [] [ text "Quiz", (viewSecretWord model) ] ]
 
 viewHistory : Model -> Html Msg
 viewHistory model = 
@@ -148,6 +149,33 @@ viewFooter =
 
 randomWord : String
 randomWord = "ERNSTL"
+
+viewSecretWord : Model -> Html Msg
+viewSecretWord model =
+    let
+        mask : Char -> String
+        mask c =
+            if List.member (Char.toUpper c) model.letter then
+                String.toUpper (fromChar c)
+            else
+                "*"
+        
+        toSpan : Char -> Html Msg
+        toSpan c =
+            span [] [ text (mask c) ]
+
+        toSpanList : String -> List (Html Msg)
+        toSpanList foo =
+            let
+                bar = uncons foo
+            in 
+            case bar of
+                Just (c, cs) ->
+                    (toSpan c) :: (toSpanList cs)
+                Nothing ->
+                    []
+    in
+        div [] (toSpanList model.secretWord)
 
 
 viewSnowman : Model -> Html msg
