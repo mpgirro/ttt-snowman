@@ -39,7 +39,7 @@ initModel =
     { snowman = EmptySnowman 
     , secretWord = randomWord
     , letter = []
-    , errors = 6
+    , errors = 0
     }
 
 init : flags -> ( Model, Cmd Msg )
@@ -58,9 +58,24 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
+    let
+        appendIfNotPresent : Char -> List Char
+        appendIfNotPresent c =
+            if List.member (Char.toUpper c) model.letter then
+                model.letter
+            else
+                model.letter ++ [ Char.toUpper c ]
+        
+        incErrorIfNotInWord : Char -> Int
+        incErrorIfNotInWord c =
+            if contains (fromChar (Char.toUpper c)) model.secretWord then
+                model.errors
+            else
+                model.errors + 1
+    in 
     case message of
         UpdateSnowman c ->
-            ( { model | letter = model.letter ++ [ (Char.toUpper c) ] }, Cmd.none)
+            ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none)
 
         Restart ->
             ( initModel, Cmd.none)
@@ -231,7 +246,14 @@ viewSnowman model =
                     , text snowmanText5
                     , text snowmanText6
                     ]
-                _ -> [ text "ERROR" ]
+                _ -> 
+                    [ text snowmanEmptyText4
+                    , text snowmanEmptyText5
+                    , text snowmanEmptyText5
+                    , text snowmanEmptyText5
+                    , text snowmanEmptyText5
+                    , text snowmanEmptyText4
+                    ]
         in 
             pre [] snowman
 
