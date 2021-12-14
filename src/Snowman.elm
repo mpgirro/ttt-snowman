@@ -8,6 +8,8 @@ import Html.Attributes exposing (alt, class, href, src)
 import Html.Attributes.Extra
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
+import Random exposing (Generator)
+import Random.List exposing (choose)
 import String exposing (concat, contains, fromChar, fromList, join, lines, toUpper, trim, uncons)
 import Html.Attributes exposing (disabled)
 
@@ -35,6 +37,7 @@ type alias Model =
     , secretWord : String
     , letter : List Char
     , errors : Int
+    , remainingWords : List String
     }
 
 type GameState
@@ -47,16 +50,25 @@ type GameState
 initModel : Model
 initModel =
     { state = ReadyToPlay
-    , secretWord = randomWord
+    , secretWord = "INITIAL"
     , letter = []
     , errors = 0
+    , remainingWords = []
     }
+
+initialSecretWordList : List String
+initialSecretWordList = 
+    List.map String.toUpper ["disastrous", "forgetful", "clumsy", "obnoxious", "defiant", "malicious", "trousers", "wobble", "adaptable", "hideous"]
 
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( initModel, Cmd.none )
+    ( initModel, chooseWord initialSecretWordList )
 
+chooseWord : List String -> Cmd Msg
+chooseWord words =
+    choose initialSecretWordList
+        |> Random.generate Initialize
 
 
 ---- UPDATE ----
@@ -65,6 +77,7 @@ init _ =
 type Msg
     = UpdateSnowman Char
     | Otherkey
+    | Initialize (Maybe String, List String)
     | Restart
 
 
@@ -146,8 +159,17 @@ update message model =
         Otherkey ->
             ( model, Cmd.none )
 
+        Initialize (maybeNewWord, remainingWords) ->
+            case maybeNewWord of
+                Just newWord ->
+                    ( { initModel | secretWord = newWord, remainingWords = remainingWords }, Cmd.none )
+
+                Nothing ->
+                    ( { initModel | secretWord = "FALLBACK" }, Cmd.none )
+
         Restart ->
-            ( initModel, Cmd.none )
+            ( model, chooseWord model.remainingWords )
+                
 
 
 
@@ -194,7 +216,7 @@ viewContent model =
         , viewAlphabetButtons model
         , viewSnowman model
         , viewResultMessage model
-        , viewRestartButton
+        , viewRestartButton model
         , viewFooter
         ]
 
@@ -233,13 +255,6 @@ viewResultMessage model =
 
 ---- HELPER ----
 
-
-
-
-
-randomWord : String
-randomWord =
-    "ERNSTL"
 
 
 contains : Char -> List Char -> Bool
@@ -334,8 +349,8 @@ viewLetters model =
     toSpanList model.letter
 
 
-viewRestartButton : Html Msg
-viewRestartButton =
+viewRestartButton : Model -> Html Msg
+viewRestartButton model =
     p [] [ button [ onClick Restart ] [ text "Restart" ] ]
 
 
