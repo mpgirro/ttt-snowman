@@ -6,7 +6,8 @@ import Char exposing (toUpper)
 import Html exposing (Html, button, code, div, h1, input, p, pre, span, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import String exposing (contains, fromChar, fromList, toUpper, uncons)
+import Json.Decode as Decode
+import String exposing (concat, contains, fromChar, fromList, join, lines, toUpper, trim, uncons)
     
 
 ---- PROGRAM ----
@@ -47,12 +48,12 @@ init _ =
     ( initModel, Cmd.none )
         
   
-
 ---- UPDATE ----
 
 
 type Msg
     = UpdateSnowman Char
+    | Otherkey
     | Restart
 
 
@@ -68,14 +69,20 @@ update message model =
         
         incErrorIfNotInWord : Char -> Int
         incErrorIfNotInWord c =
-            if contains (fromChar (Char.toUpper c)) model.secretWord then
+            if String.contains (fromChar (Char.toUpper c)) model.secretWord then
                 model.errors
             else
                 model.errors + 1
     in 
     case message of
         UpdateSnowman c ->
-            ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none)
+            if contains c alphabet then
+                ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none)
+            else
+                ( model, Cmd.none )
+
+        Otherkey ->
+            ( model, Cmd.none )
 
         Restart ->
             ( initModel, Cmd.none)
@@ -86,28 +93,23 @@ update message model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Browser.Events.onKeyDown keyDecoder
 
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+    Decode.map toKey (Decode.field "key" Decode.string)
+
+toKey : String -> Msg
+toKey keyValue =
+    case String.uncons keyValue of
+        Just ( char, "" ) ->
+            UpdateSnowman (Char.toUpper char)
+
+        _ ->
+            Otherkey
 
 
 ---- VIEW ----
-
-updateInput : Model -> String -> Msg
-updateInput model query =
-    UpdateSnowman (typedChar (uncons query))
-        
-
-typedChar : Maybe ( Char, String ) -> Char 
-typedChar maybe =
-    case maybe of
-        Just ( c, _ ) -> 
-            c
-        Nothing -> 
-            emptyChar
-
-
-emptyChar : Char
-emptyChar = Char.fromCode 0
 
 view : Model -> Document Msg
 view model =
@@ -120,15 +122,44 @@ viewContent model =
     div []
         [ viewHeader
         , viewQuiz model
-        , input [ placeholder "Guess the word", value "", onInput (updateInput model) ] []
+        , viewAlphabetButtons
         , viewHistory model
         , viewSnowman model
+        , viewRestartButton
         , viewFooter
         ]
 
+---- HELPER ----
 
---viewContent : Model -> ( String, Html Msg )
---viewContent model = ( "TTT Snowman", foo)
+randomWord : String
+randomWord = "ERNSTL"
+
+
+contains : Char -> List Char -> Bool
+contains c cs =
+    String.contains (String.fromChar c) (fromList cs)
+
+alphabet : List Char
+alphabet = 
+    ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+  
+
+typedChar : Maybe ( Char, String ) -> Char 
+typedChar maybe =
+    case maybe of
+        Just ( c, _ ) -> 
+            c
+        Nothing -> 
+            emptyChar
+
+emptyChar : Char
+emptyChar = Char.fromCode 0
+
+
+maxAttempts : Int
+maxAttempts = 6
+
+---- VIEW HELPER ----
 
 viewHeader : Html msg
 viewHeader = h1 [] [ text "TTT Snowman" ] 
@@ -136,7 +167,17 @@ viewHeader = h1 [] [ text "TTT Snowman" ]
 viewQuiz : Model -> Html Msg
 viewQuiz model = 
     div [] 
-        [ p [] [ text "Quiz", (viewSecretWord model) ] ]
+        [ p [] [ text "Guess the word", (viewSecretWord model) ] ]
+
+viewAlphabetButtons: Html Msg
+viewAlphabetButtons =
+    let
+
+        toButton : Char -> Html Msg
+        toButton c =
+            button [ onClick (UpdateSnowman c) ] [ text (fromChar c) ]
+    in
+    div [] (List.map toButton alphabet)
 
 viewHistory : Model -> Html Msg
 viewHistory model = 
@@ -156,14 +197,15 @@ viewLetters model =
     in
         div [] (toSpanList model.letter)
 
+viewRestartButton : Html Msg
+viewRestartButton =
+    button [ onClick Restart ] [ text "Restart" ]
+
+
 viewFooter : Html Msg
 viewFooter = 
-    div [] [ text "Made with ❤️ and Elm for viesure by Max" ]
+    div [] [ text "Made by Max with ❤️ and Elm for viesure. View source on GitHub." ]
 
----- HELPER ----
-
-randomWord : String
-randomWord = "ERNSTL"
 
 viewSecretWord : Model -> Html Msg
 viewSecretWord model =
@@ -173,7 +215,7 @@ viewSecretWord model =
             if List.member (Char.toUpper c) model.letter then
                 String.toUpper (fromChar c)
             else
-                "*"
+                " _ "
         
         toSpan : Char -> Html Msg
         toSpan c =
@@ -196,66 +238,79 @@ viewSecretWord model =
 viewSnowman : Model -> Html msg
 viewSnowman model =
     let
-        snowman = 
+        filterEmptyLine : String -> String
+        filterEmptyLine line =
+            if line == "\n" then
+                ""
+            else 
+                line
+
+        snowmanList : List String
+        snowmanList = 
             case model.errors of
+                0 -> 
+                    [ trim snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
+                    ]
                 1 -> 
-                    [ text snowmanText1
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
                     ]
                 2 ->
-                    [ text snowmanText1
-                    , text snowmanText2
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
                     ]
                 3 ->
-                    [ text snowmanText1
-                    , text snowmanText2
-                    , text snowmanText3
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
                     ]
                 4 ->
-                    [ text snowmanText1
-                    , text snowmanText2
-                    , text snowmanText3
-                    , text snowmanText4
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
                     ]
                 5 ->
-                    [ text snowmanText1
-                    , text snowmanText2
-                    , text snowmanText3
-                    , text snowmanText4
-                    , text snowmanText5
-                    , text snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanEmptyText4
                     ]
-                6 ->
-                    [ text snowmanText1
-                    , text snowmanText2
-                    , text snowmanText3
-                    , text snowmanText4
-                    , text snowmanText5
-                    , text snowmanText6
+                _ ->
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
                     ]
-                _ -> 
-                    [ text snowmanEmptyText4
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText5
-                    , text snowmanEmptyText4
-                    ]
+            
+        snowman : String
+        snowman =  
+            join "\n" (List.map filterEmptyLine (lines (concat snowmanList)))
+
         in 
-            pre [] snowman
+            pre [] [ text snowman ]
 
 snowmanEmptyText4 : String
 snowmanEmptyText4 =
