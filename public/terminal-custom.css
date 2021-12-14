@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css?family=Inconsolata&display=swap');
+:root {
+    --global-font-size: 15px;
+    --global-line-height: 1.4em;
+    --global-space: 10px;
+    --font-stack: Inconsolata, monospace;
+    --mono-font-stack: Inconsolata, monospace;
+    --background-color: #222225;
+    --page-width: 38em;
+    --header-color: #b5e853;
+    --font-color: #e8e9ed;
+    --invert-font-color: #222225;
+    --secondary-color: #a3abba;
+    --tertiary-color: #a3abba;
+    --primary-color: #62c4ff;
+    --error-color: #ff3c74;
+    --progress-bar-background: #3f3f44;
+    --progress-bar-fill: #62c4ff;
+    --code-bg-color: #3f3f44;
+    --input-style: solid;
+    --display-h1-decoration: none;
+}
+
+del {
+    opacity: 0.4;
+}
+
+.container {
+    margin: 0;
+}
+
+.terminal h1,
+.terminal h2,
+.terminal h3,
+.terminal h4,
+.terminal h5,
+.terminal h6 {
+    color: var(--header-color);
+}
+
+.logo>a {
+    color: var(--header-color);
+}
+
+pre,
+code {
+    background-color: var(--code-bg-color);
+}
+
+code::after,
+code::before {
+    content: inherit
+}
+
+ol>li>p {
+    display: inline-table;
+    margin-inline-start: 1ex;
+    margin-bottom: 0;
+}
+
+ol {
+    display: table;
+}
+
+ol>li {
+    list-style: none;
+    display: table-row;
+}
+
+ol>li::before {
+    display: table-cell;
+    text-align: right;
+}

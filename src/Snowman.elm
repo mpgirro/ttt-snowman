@@ -1,10 +1,10 @@
-module Snowman exposing (..)
+module Snowman exposing (init)
 
 import Browser exposing (Document)
 import Browser.Events exposing (onKeyPress)
 import Char exposing (toUpper)
 import Html exposing (Html, button, code, div, h1, input, p, pre, span, text)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (alt, class, href, src)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import String exposing (concat, contains, fromChar, fromList, join, lines, toUpper, trim, uncons)
@@ -21,6 +21,7 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
 
 ---- MODEL ----
 
@@ -114,20 +115,28 @@ toKey keyValue =
 view : Model -> Document Msg
 view model =
     { title = "TTT Snowman"
-    , body = [ viewContent model ]
+    , body = [ viewBody model ]
     }
 
 viewContent : Model -> Html Msg
 viewContent model =
     div []
         [ viewHeader
-        , viewQuiz model
-        , viewAlphabetButtons
         , viewHistory model
+        , viewAlphabetButtons
+        , viewChallenge model
         , viewSnowman model
         , viewRestartButton
-        , viewFooter
+--        , viewFooter
         ]
+
+viewBody : Model -> Html Msg
+viewBody model =
+    div 
+    [ class "terminal" ] 
+    [ div [ class "container" ]
+        [ viewContent model ]
+    ]
 
 ---- HELPER ----
 
@@ -162,40 +171,49 @@ maxAttempts = 6
 ---- VIEW HELPER ----
 
 viewHeader : Html msg
-viewHeader = h1 [] [ text "TTT Snowman" ] 
+viewHeader = 
+    h1 [] [ text "TTT Snowman" ] 
 
-viewQuiz : Model -> Html Msg
-viewQuiz model = 
+viewChallenge : Model -> Html Msg
+viewChallenge model = 
     div [] 
-        [ p [] [ text "Guess the word", (viewSecretWord model) ] ]
+    [ span [] (viewChallengeInfo :: viewSecretWord model) 
+    ]
+
+viewChallengeInfo : Html Msg
+viewChallengeInfo =
+    span [ class "info" ] [ text "Guess the word:" ]
 
 viewAlphabetButtons: Html Msg
 viewAlphabetButtons =
     let
-
         toButton : Char -> Html Msg
         toButton c =
-            button [ onClick (UpdateSnowman c) ] [ text (fromChar c) ]
+            button [ onClick (UpdateSnowman c), class "btn", class "btn-default" ] [ text (fromChar c) ]
     in
-    div [] (List.map toButton alphabet)
+    div [ class "char-button-list" ] (List.map toButton alphabet)
 
 viewHistory : Model -> Html Msg
 viewHistory model = 
-    p [] 
-    [ text "Last typed letters:", viewLetters model ]
+    div [] 
+    [ span [ class "terminal-prompt" ] (viewHistoryInfo :: viewLetters model)
+    ]
 
+viewHistoryInfo: Html Msg
+viewHistoryInfo = 
+    span [ class "info" ] [ text "Last typed letters:" ]
 
-viewLetters : Model -> Html Msg
+viewLetters : Model -> List (Html Msg)
 viewLetters model =
     let
         toSpan : Char -> Html Msg
-        toSpan c = span [] [ text (fromChar c) ]
+        toSpan c = span [ class "letter" ] [ text (fromChar c) ]
 
         toSpanList : List Char -> List (Html Msg)
         toSpanList cs =
             List.map toSpan cs
     in
-        div [] (toSpanList model.letter)
+    toSpanList model.letter
 
 viewRestartButton : Html Msg
 viewRestartButton =
@@ -207,7 +225,7 @@ viewFooter =
     div [] [ text "Made by Max with ❤️ and Elm for viesure. View source on GitHub." ]
 
 
-viewSecretWord : Model -> Html Msg
+viewSecretWord : Model -> List (Html Msg)
 viewSecretWord model =
     let
         mask : Char -> String
@@ -215,11 +233,11 @@ viewSecretWord model =
             if List.member (Char.toUpper c) model.letter then
                 String.toUpper (fromChar c)
             else
-                " _ "
+                "_"
         
         toSpan : Char -> Html Msg
         toSpan c =
-            span [] [ text (mask c) ]
+            span [ class "letter" ] [ text (mask c) ]
 
         toSpanList : String -> List (Html Msg)
         toSpanList foo =
@@ -232,7 +250,7 @@ viewSecretWord model =
                 Nothing ->
                     []
     in
-        div [] (toSpanList model.secretWord)
+     toSpanList model.secretWord
 
 
 viewSnowman : Model -> Html msg
@@ -249,7 +267,7 @@ viewSnowman model =
         snowmanList = 
             case model.errors of
                 0 -> 
-                    [ trim snowmanEmptyText4
+                    [ snowmanEmptyText4
                     , snowmanEmptyText5
                     , snowmanEmptyText5
                     , snowmanEmptyText5
@@ -257,44 +275,44 @@ viewSnowman model =
                     , snowmanEmptyText4
                     ]
                 1 -> 
-                    [ snowmanText1
+                    [ snowmanEmptyText4
                     , snowmanEmptyText5
                     , snowmanEmptyText5
                     , snowmanEmptyText5
                     , snowmanEmptyText5
-                    , snowmanEmptyText4
+                    , snowmanText6
                     ]
                 2 ->
-                    [ snowmanText1
-                    , snowmanText2
+                    [ snowmanEmptyText4
                     , snowmanEmptyText5
                     , snowmanEmptyText5
                     , snowmanEmptyText5
-                    , snowmanEmptyText4
+                    , snowmanText5
+                    , snowmanText6
                     ]
                 3 ->
-                    [ snowmanText1
-                    , snowmanText2
-                    , snowmanText3
+                    [ snowmanEmptyText4
                     , snowmanEmptyText5
                     , snowmanEmptyText5
-                    , snowmanEmptyText4
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
                     ]
                 4 ->
-                    [ snowmanText1
-                    , snowmanText2
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
                     , snowmanText3
                     , snowmanText4
-                    , snowmanEmptyText5
-                    , snowmanEmptyText4
+                    , snowmanText5
+                    , snowmanText6
                     ]
                 5 ->
-                    [ snowmanText1
+                    [ snowmanEmptyText4
                     , snowmanText2
                     , snowmanText3
                     , snowmanText4
                     , snowmanText5
-                    , snowmanEmptyText4
+                    , snowmanText6
                     ]
                 _ ->
                     [ snowmanText1
@@ -310,7 +328,7 @@ viewSnowman model =
             join "\n" (List.map filterEmptyLine (lines (concat snowmanList)))
 
         in 
-            pre [] [ text snowman ]
+            pre [ class "snowman" ] [ text snowman ]
 
 snowmanEmptyText4 : String
 snowmanEmptyText4 =
