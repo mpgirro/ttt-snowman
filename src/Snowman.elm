@@ -87,10 +87,12 @@ update message model =
     in
     case message of
         UpdateSnowman c ->
-            if model.errors >= maxAttempts then
+            if isWon model || isLost model then
                 ( model, Cmd.none )
+
             else if contains c alphabet then
                 ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none )
+
             else
                 ( model, Cmd.none )
 
@@ -170,8 +172,11 @@ viewResultMessage model =
     if model.errors <= 0 then
         p [] [ text "Type or press a letter to start the game (", text attemptsLeft, text " attempts left)" ]
 
-    else if model.errors >= maxAttempts then
-        p [] [ text "Game lost 😭" ]
+    else if isWon model then
+        p [] [ text "You won the game 🎉" ]
+
+    else if isLost model then
+        p [] [ text "You lost the game 😭. The secret word was: ", text model.secretWord ]
 
     else 
         p [] [ text attemptsLeft, text " attempts left" ]
@@ -179,6 +184,25 @@ viewResultMessage model =
 
 
 ---- HELPER ----
+
+
+isWon : Model -> Bool
+isWon model = 
+    let
+        maskedSecretWord : String
+        maskedSecretWord = maskString model.secretWord model.letter
+
+        maskedChars : List Char
+        maskedChars = String.toList maskedSecretWord
+
+        containsMaskSymbol : Bool
+        containsMaskSymbol = contains maskSymbol maskedChars
+    in
+    containsMaskSymbol == False
+
+isLost : Model -> Bool
+isLost model =
+    model.errors >= maxAttempts    
 
 
 randomWord : String
@@ -233,7 +257,7 @@ viewChallenge model =
 
 viewChallengeInfo : Html Msg
 viewChallengeInfo =
-    span [ class "info" ] [ text "Challenge word:" ]
+    span [ class "info" ] [ text "Secret word:" ]
 
 
 viewAlphabetButtons : Model -> Html Msg
@@ -261,7 +285,7 @@ viewHistory model =
 
 viewHistoryInfo : Html Msg
 viewHistoryInfo =
-    span [ class "info" ] [ text "Attempted letters:" ]
+    span [ class "info" ] [ text "Typed letters:" ]
 
 
 viewLetters : Model -> List (Html Msg)
@@ -294,35 +318,52 @@ viewFooter =
         ]
 
 
+maskSymbol : Char
+maskSymbol = '_'
+
+-- mask c
+maskIfNotPresent : Char -> List Char -> Char
+maskIfNotPresent c cs =
+    if List.member (Char.toUpper c) cs then
+        Char.toUpper c
+    else
+        '_'
+
+maskString : String -> List Char -> String
+maskString word letters =
+    let
+        wordChars : List Char
+        wordChars = String.toList word
+
+        mask : Char -> Char 
+        mask c =
+            maskIfNotPresent c letters
+        maskedWordChars : List Char
+        maskedWordChars =
+            List.map mask wordChars
+    in
+    String.fromList maskedWordChars
+
+    
 viewSecretWord : Model -> List (Html Msg)
 viewSecretWord model =
     let
-        mask : Char -> String
-        mask c =
-            if List.member (Char.toUpper c) model.letter then
-                String.toUpper (fromChar c)
-
-            else
-                "_"
-
+        maskedSecretWord : String
+        maskedSecretWord = maskString model.secretWord model.letter
         toSpan : Char -> Html Msg
         toSpan c =
-            span [ class "letter" ] [ text (mask c) ]
+            span [ class "letter" ] [ text (fromChar c) ]
 
         toSpanList : String -> List (Html Msg)
-        toSpanList foo =
-            let
-                bar =
-                    uncons foo
-            in
-            case bar of
+        toSpanList word =
+            case uncons word of
                 Just ( c, cs ) ->
                     toSpan c :: toSpanList cs
 
                 Nothing ->
                     []
     in
-    toSpanList model.secretWord
+    toSpanList maskedSecretWord
 
 
 viewSnowman : Model -> Html msg
