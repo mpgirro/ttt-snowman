@@ -11,7 +11,7 @@
             }
             
             .container {
-                max-width: 50em;
+                max-width: 37em;
             }
             
             .terminal {
@@ -49,11 +49,18 @@
             [type="submit"] {
                 -webkit-appearance: button;
             }
+
+            button[disabled=disabled], 
+            button:disabled {
+                background-color: #a3abba;
+                cursor: not-allowed;
+            }
             
+            /*
             .char-button-list {
                 margin-right: 10em;
             }
-            
+            */
             .letter {
                 padding-left: 0.5ex;
                 padding-right: 0.5ex;

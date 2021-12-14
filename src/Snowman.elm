@@ -3,11 +3,13 @@ module Snowman exposing (init)
 import Browser exposing (Document)
 import Browser.Events exposing (onKeyPress)
 import Char exposing (toUpper)
-import Html exposing (Html, button, code, div, h1, input, p, pre, span, text)
+import Html exposing (a, Html, button, code, div, h1, input, p, pre, span, text)
 import Html.Attributes exposing (alt, class, href, src)
+import Html.Attributes.Extra
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import String exposing (concat, contains, fromChar, fromList, join, lines, toUpper, trim, uncons)
+import Html.Attributes exposing (disabled)
 
 
 
@@ -85,9 +87,10 @@ update message model =
     in
     case message of
         UpdateSnowman c ->
-            if contains c alphabet then
+            if model.errors >= maxAttempts then
+                ( model, Cmd.none )
+            else if contains c alphabet then
                 ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none )
-
             else
                 ( model, Cmd.none )
 
@@ -137,13 +140,13 @@ viewContent : Model -> Html Msg
 viewContent model =
     div []
         [ viewHeader
-        , viewHistory model
-        , viewAlphabetButtons
         , viewChallenge model
+        , viewHistory model
+        , viewAlphabetButtons model
         , viewSnowman model
+        , viewResultMessage model
         , viewRestartButton
-
-        --        , viewFooter
+        , viewFooter
         ]
 
 
@@ -154,6 +157,24 @@ viewBody model =
         [ div [ class "container" ]
             [ viewContent model ]
         ]
+
+
+viewResultMessage : Model -> Html Msg
+viewResultMessage model =
+    let
+        attemptsLeft : String
+        attemptsLeft =
+            String.fromInt (maxAttempts - model.errors)
+
+    in
+    if model.errors <= 0 then
+        p [] [ text "Type or press a letter to start the game (", text attemptsLeft, text " attempts left)" ]
+
+    else if model.errors >= maxAttempts then
+        p [] [ text "Game lost 😭" ]
+
+    else 
+        p [] [ text attemptsLeft, text " attempts left" ]
 
 
 
@@ -191,8 +212,7 @@ emptyChar =
 
 
 maxAttempts : Int
-maxAttempts =
-    6
+maxAttempts = 6
 
 
 
@@ -206,36 +226,42 @@ viewHeader =
 
 viewChallenge : Model -> Html Msg
 viewChallenge model =
-    div []
+    p []
         [ span [] (viewChallengeInfo :: viewSecretWord model)
         ]
 
 
 viewChallengeInfo : Html Msg
 viewChallengeInfo =
-    span [ class "info" ] [ text "Guess the word:" ]
+    span [ class "info" ] [ text "Challenge word:" ]
 
 
-viewAlphabetButtons : Html Msg
-viewAlphabetButtons =
+viewAlphabetButtons : Model -> Html Msg
+viewAlphabetButtons model =
     let
         toButton : Char -> Html Msg
         toButton c =
-            button [ onClick (UpdateSnowman c), class "btn", class "btn-default" ] [ text (fromChar c) ]
+            button 
+                [ onClick (UpdateSnowman c)
+                , class "btn"
+                , class "btn-default" 
+                , disabled (contains c model.letter)
+                ] 
+                [ text (fromChar c) ]
     in
     div [ class "char-button-list" ] (List.map toButton alphabet)
 
 
 viewHistory : Model -> Html Msg
 viewHistory model =
-    div []
+    p []
         [ span [ class "terminal-prompt" ] (viewHistoryInfo :: viewLetters model)
         ]
 
 
 viewHistoryInfo : Html Msg
 viewHistoryInfo =
-    span [ class "info" ] [ text "Last typed letters:" ]
+    span [ class "info" ] [ text "Attempted letters:" ]
 
 
 viewLetters : Model -> List (Html Msg)
@@ -254,12 +280,18 @@ viewLetters model =
 
 viewRestartButton : Html Msg
 viewRestartButton =
-    button [ onClick Restart ] [ text "Restart" ]
+    p [] [ button [ onClick Restart ] [ text "Restart" ] ]
 
 
 viewFooter : Html Msg
 viewFooter =
-    div [] [ text "Made by Max with ❤️ and Elm for viesure. View source on GitHub." ]
+    p [] 
+        [ text "Made with ❤️ and " 
+        , a [ href "https://elm-lang.org" ] [ text "Elm" ]
+        , text " for viesure. View source on "
+        , a [ href "https://github.com/mpgirro/ttt-snowman" ] [ text "GitHub" ]
+        , text "."
+        ]
 
 
 viewSecretWord : Model -> List (Html Msg)
