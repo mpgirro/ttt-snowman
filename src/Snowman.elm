@@ -31,20 +31,22 @@ main =
 
 
 type alias Model =
-    { snowman : Snowman
+    { state : GameState
     , secretWord : String
     , letter : List Char
     , errors : Int
     }
 
-
-type Snowman
-    = EmptySnowman
+type GameState
+    = ReadyToPlay
+    | Playing
+    | Won
+    | Lost
 
 
 initModel : Model
 initModel =
-    { snowman = EmptySnowman
+    { state = ReadyToPlay
     , secretWord = randomWord
     , letter = []
     , errors = 0
@@ -66,6 +68,18 @@ type Msg
     | Restart
 
 
+isWon : Model -> Bool
+isWon model = 
+    case model.state of
+       Won -> True
+       _ -> False
+
+isLost : Model -> Bool
+isLost model =
+    case model.state of
+       Lost -> True
+       _ -> False 
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     let
@@ -84,6 +98,34 @@ update message model =
 
             else
                 model.errors + 1
+
+        modelWon : Model -> Bool
+        modelWon aModel =
+            let
+                maskedSecretWord : String
+                maskedSecretWord = maskString aModel.secretWord aModel.letter
+
+                maskedChars : List Char
+                maskedChars = String.toList maskedSecretWord
+
+                containsMaskSymbol : Bool
+                containsMaskSymbol = contains maskSymbol maskedChars
+            in
+            containsMaskSymbol == False
+
+        modelLost : Model -> Bool
+        modelLost aModel =
+            aModel.errors >= maxAttempts    
+
+
+        newGameState : Model -> GameState 
+        newGameState aModel =
+            if modelWon aModel then
+                Won
+            else if modelLost aModel then
+                Lost
+            else 
+                Playing
     in
     case message of
         UpdateSnowman c ->
@@ -91,7 +133,12 @@ update message model =
                 ( model, Cmd.none )
 
             else if contains c alphabet then
-                ( { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }, Cmd.none )
+                let
+                    newModel : Model
+                    newModel =
+                        { model | letter = appendIfNotPresent c, errors = incErrorIfNotInWord c }
+                in
+                ( { newModel | state = newGameState newModel }, Cmd.none )
 
             else
                 ( model, Cmd.none )
@@ -169,40 +216,25 @@ viewResultMessage model =
             String.fromInt (maxAttempts - model.errors)
 
     in
-    if model.errors <= 0 then
-        p [] [ text "Type or press a letter to start the game (", text attemptsLeft, text " attempts left)" ]
+    case model.state of
+        ReadyToPlay ->
+            p [] [ text "Type or press a letter to start the game (", text attemptsLeft, text " attempts left)" ]
 
-    else if isWon model then
-        p [] [ text "You won the game 🎉" ]
+        Won ->
+            p [] [ text "You won the game 🎉" ]
 
-    else if isLost model then
-        p [] [ text "You lost the game 😭. The secret word was: ", text model.secretWord ]
+        Lost ->
+            p [] [ text "You lost the game 😭. The secret word was: ", text model.secretWord ]
 
-    else 
-        p [] [ text attemptsLeft, text " attempts left" ]
+        Playing ->
+            p [] [ text attemptsLeft, text " attempts left" ]
 
 
 
 ---- HELPER ----
 
 
-isWon : Model -> Bool
-isWon model = 
-    let
-        maskedSecretWord : String
-        maskedSecretWord = maskString model.secretWord model.letter
 
-        maskedChars : List Char
-        maskedChars = String.toList maskedSecretWord
-
-        containsMaskSymbol : Bool
-        containsMaskSymbol = contains maskSymbol maskedChars
-    in
-    containsMaskSymbol == False
-
-isLost : Model -> Bool
-isLost model =
-    model.errors >= maxAttempts    
 
 
 randomWord : String
