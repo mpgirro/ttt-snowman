@@ -1,0 +1,168 @@
+
+viewSnowman : Model -> Html msg
+viewSnowman model =
+    let
+        filterEmptyLine : String -> String
+        filterEmptyLine line =
+            if line == "\n" then
+                ""
+
+            else
+                line
+
+        snowmanList : List String
+        snowmanList =
+            case model.errors of
+                0 ->
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText4
+                    ]
+
+                1 ->
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanText6
+                    ]
+
+                2 ->
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanText5
+                    , snowmanText6
+                    ]
+
+                3 ->
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanEmptyText5
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
+                    ]
+
+                4 ->
+                    [ snowmanEmptyText4
+                    , snowmanEmptyText5
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
+                    ]
+
+                5 ->
+                    [ snowmanEmptyText4
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
+                    ]
+
+                _ ->
+                    [ snowmanText1
+                    , snowmanText2
+                    , snowmanText3
+                    , snowmanText4
+                    , snowmanText5
+                    , snowmanText6
+                    ]
+
+        snowman : String
+        snowman =
+            join "\n" (List.map filterEmptyLine (lines (concat snowmanList)))
+    in
+    pre [ class "snowman" ] [ text snowman ]
+
+
+snowmanEmptyText4 : String
+snowmanEmptyText4 =
+    """
+
+
+
+
+    """
+
+
+snowmanEmptyText5 : String
+snowmanEmptyText5 =
+    """
+
+
+
+
+
+    """
+
+
+snowmanText1 : String
+snowmanText1 =
+    """
+                       .--------.
+  *               .    |________|        .          *
+                       |      __|/\\
+            *        .-'======\\_\\o/. 
+    """
+
+
+snowmanText2 : String
+snowmanText2 =
+    """
+                    /___________<>__\\
+              ||||||  /  (o) (o)  \\
+              |||||| |   _  O  _   |          .
+    .         |||||| |  (_)   (_)  |
+              ||||||  \\   '---'   /    * 
+    """
+
+
+snowmanText3 : String
+snowmanText3 =
+    """
+              \\====/   [~~~~~~~~~]
+               \\//  _/~||~`|~~~~~\\_
+               _||-'`/  ||  |      \\`'-._       *
+       *    .-` )|  ;   ||  |)      ;    '.
+           /    `--.|   ||  |       |      `\\ 
+    """
+
+
+snowmanText4 : String
+snowmanText4 =
+    """
+          |         \\   |||||)      |-,      \\         .
+           \\       .;       _       ; |_,    |
+            `'''||` ,\\     (_)     /,    `.__/
+                ||.`  '.         .'  `.             *
+     *          ||       ` ' ' `       \\
+    """
+
+
+snowmanText5 : String
+snowmanText5 =
+    """
+                ||                      ;
+  .          *  ||                      |    .
+                ||                      |              *
+                ||                      |
+.__.-""-.__.-\"\"\"||                      ;.-\"\"\"-.__.-""-.__. 
+    """
+
+
+snowmanText6 : String
+snowmanText6 =
+    """
+                ||                     /
+           jgs  ||'.                 .'
+                ||  '-._  _ _  _ _.-'
+               `""` 
+    """

@@ -66,3 +66,17 @@
             .terminal-prompt::before {
                 content: "";
             }
+
+            pre {
+                font-weight: bold;
+            }
+
+            .terminal,
+            pre {
+                font-family: "Ubuntu Mono";
+            }
+
+            :root {
+                --font-stack: "Ubuntu Mono" !important;
+                --mono-font-stack: "Ubuntu Mono", monospace;
+            }
