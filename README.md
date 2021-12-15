@@ -1,7 +1,7 @@
 # TTT Snowman
 
 <p align="center">
-  <img src="screenshot.png" alt="screenshot" width="540" />
+  <img src="screenshot.png" alt="screenshot" />
 </p>
 
 This is an adapted version of the famous [hangman](https://en.wikipedia.org/wiki/Hangman_(game)) game for a Tech Tea Time challenge at [viesure](https://viesure.io) in December 2021. 
@@ -14,13 +14,13 @@ Merry Christmas!
 
 Install [create-elm-app](https://github.com/halfzebra/create-elm-app)
 
-Run local with:
+Run in development mode with:
 
 ```
 elm-app start
 ```
 
-or build for deployment with:
+or build for production with:
 
 ```
 elm-app build
