@@ -458,36 +458,36 @@ viewSnowman model =
                     ]
 
                 2 ->
-                    [ snowmanEmptyText4
+                    [ snowmanText1
                     , snowmanEmptyText5
                     , snowmanEmptyText5
                     , snowmanEmptyText5
-                    , snowmanText5
+                    , snowmanEmptyText5
                     , snowmanText6
                     ]
 
                 3 ->
-                    [ snowmanEmptyText4
+                    [ snowmanText1
                     , snowmanEmptyText5
                     , snowmanEmptyText5
-                    , snowmanText4
+                    , snowmanEmptyText5
                     , snowmanText5
                     , snowmanText6
                     ]
 
                 4 ->
-                    [ snowmanEmptyText4
+                    [ snowmanText1
+                    , snowmanText2
                     , snowmanEmptyText5
-                    , snowmanText3
-                    , snowmanText4
+                    , snowmanEmptyText5
                     , snowmanText5
                     , snowmanText6
                     ]
 
                 5 ->
-                    [ snowmanEmptyText4
+                    [ snowmanText1
                     , snowmanText2
-                    , snowmanText3
+                    , snowmanEmptyText5
                     , snowmanText4
                     , snowmanText5
                     , snowmanText6
